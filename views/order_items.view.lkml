@@ -42,10 +42,84 @@ view: order_items {
     sql: ${TABLE}.retailer_id ;;
   }
 
+  ## MTD
+  dimension: current_date {
+    group_label: "MTD"
+    hidden: no
+    sql: CURRENT_DATE() ;;
+  }
+
+  dimension: current_day_number {
+    group_label: "MTD"
+    type: number
+    hidden: no
+    sql: EXTRACT(DAY FROM ${current_date}) ;;
+  }
+
+  dimension: days_in_previous_month {
+    group_label: "MTD"
+    type: number
+    hidden: no
+    sql:
+      CASE
+        WHEN EXTRACT(MONTH FROM DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)) IN (1,3,5,7,8,10,12) THEN 31
+        WHEN EXTRACT(MONTH FROM DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)) = 2 THEN 28
+        ELSE 30
+      END
+    ;;
+  }
+
+  dimension: is_current_month_to_date {
+    group_label: "MTD"
+    type: yesno
+    hidden: no
+    sql: DATE(DATE_TRUNC(${created_raw}, MONTH)) = DATE_TRUNC(CURRENT_DATE(), MONTH) ;;
+  }
+
+  dimension: previous_month_to_date_days {
+    group_label: "MTD"
+    hidden: no
+    sql:
+      CASE
+        WHEN ${current_day_number} > ${days_in_previous_month} THEN ${days_in_previous_month}
+        ELSE ${current_day_number}
+      END
+    ;;
+  }
+
+  dimension: is_previous_month_to_date {
+    group_label: "MTD"
+    hidden: no
+    type: yesno
+    sql:
+      DATE(${created_raw}) <= DATE_ADD(DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH), MONTH), INTERVAL ${previous_month_to_date_days} - 1 DAY)
+      AND
+      DATE_TRUNC(DATE(${created_raw}), MONTH) = DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH), MONTH)
+    ;;
+  }
+  ## /MTD
+
   measure: count {
     type: count
     drill_fields: [detail*]
   }
+
+  measure: mtd_count {
+    label: "Current MTD Count"
+    group_label: "MTD"
+    type: count
+    filters: [is_current_month_to_date: "Yes"]
+    drill_fields: [detail*]
+  }
+
+  measure: prev_mtd_count {
+    label: "Previous MTD Count"
+    group_label: "MTD"
+    type: count
+    filters: [is_previous_month_to_date: "Yes"]
+    drill_fields: [detail*]
+  }
+
 
   measure: count_last_28d { #fix
     label: "Count Sold in Trailing 28 Days"
@@ -294,6 +368,56 @@ view: order_items {
     sql: ${sale_price} ;;
     drill_fields: [detail*]
   }
+
+  measure: mtd_total_sale_price {
+    label: "Current MTD Total Sale Price"
+    group_label: "MTD"
+    type: sum
+    value_format_name: usd
+    sql: ${sale_price} ;;
+    filters: [is_current_month_to_date: "Yes"]
+    drill_fields: [detail*]
+  }
+
+  measure: prev_mtd_total_sale_price {
+    label: "Previous MTD Total Sale Price"
+    group_label: "MTD"
+    type: sum
+    value_format_name: usd
+    sql: ${sale_price} ;;
+    filters: [is_previous_month_to_date: "Yes"]
+    drill_fields: [detail*]
+  }
+
+  measure: mtd_total_sale_price_differential {
+    description: "Total Sale Price Delta (This - Last)"
+    label: "Total Sale Price Delta"
+    group_label: "MTD"
+    type: number
+    sql: 1.0 * (${mtd_total_sale_price} - ${prev_mtd_total_sale_price}) / NULLIF(${prev_mtd_total_sale_price}, 0) ;;
+    value_format_name: percent_1
+    html:
+      {% if value >= 0.2 %}
+        <div style="width: 100%; background: darkgreen; color:white">{{ rendered_value }}</div>
+      {% elsif value >= 0.05 and value < 0.2 %}
+        <div style="width: 100%; background: lightgreen; color:black">{{ rendered_value }}</div>
+      {% elsif value > -0.05 and value < 0.05 %}
+        <div style="width: 100%; color:black">{{ rendered_value }}</div>
+      {% elsif value <= -0.05 and value > -0.2 %}
+        <div style="width: 100%; background: orange; color:black">{{ rendered_value }}</div>
+      {% else %}
+        <div style="width: 100%; background: red; color:white">{{ rendered_value }}</div>
+      {% endif %}
+    ;;
+
+    #FFA500 orange
+    #FF0000 red
+    #98FB98 lightgreen
+    # darkgreen
+
+  }
+
+
 
   measure: total_gross_margin {
     group_label: "Gross Margin Measures"
