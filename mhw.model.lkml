@@ -9,6 +9,16 @@ datagroup: ecommerce_etl {
 }
 persist_with: ecommerce_etl
 
+explore: demographics_records {
+  label: "(2) Demographics Insights"
+  join: affinity_by_age {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${demographics_records.age_bucket} = ${affinity_by_age.age_bucket} ;;
+  }
+
+}
+
 explore: order_items {
   view_label: "Order Items"
   label: "(1) Orders & Retailers"
