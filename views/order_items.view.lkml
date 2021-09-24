@@ -26,7 +26,7 @@ view: order_items {
 
   dimension: inventory_item_id {
     type: number
-    hidden: yes
+    hidden: no
     sql: ${TABLE}.inventory_item_id ;;
   }
 
@@ -45,21 +45,21 @@ view: order_items {
   ## MTD
   dimension: current_date {
     group_label: "MTD"
-    hidden: no
+    hidden: yes
     sql: CURRENT_DATE() ;;
   }
 
   dimension: current_day_number {
     group_label: "MTD"
     type: number
-    hidden: no
+    hidden: yes
     sql: EXTRACT(DAY FROM ${current_date}) ;;
   }
 
   dimension: days_in_previous_month {
     group_label: "MTD"
     type: number
-    hidden: no
+    hidden: yes
     sql:
       CASE
         WHEN EXTRACT(MONTH FROM DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH)) IN (1,3,5,7,8,10,12) THEN 31
@@ -72,13 +72,13 @@ view: order_items {
   dimension: is_current_month_to_date {
     group_label: "MTD"
     type: yesno
-    hidden: no
+    hidden: yes
     sql: DATE(DATE_TRUNC(${created_raw}, MONTH)) = DATE_TRUNC(CURRENT_DATE(), MONTH) ;;
   }
 
   dimension: previous_month_to_date_days {
     group_label: "MTD"
-    hidden: no
+    hidden: yes
     sql:
       CASE
         WHEN ${current_day_number} > ${days_in_previous_month} THEN ${days_in_previous_month}
@@ -89,7 +89,7 @@ view: order_items {
 
   dimension: is_previous_month_to_date {
     group_label: "MTD"
-    hidden: no
+    hidden: yes
     type: yesno
     sql:
       DATE(${created_raw}) <= DATE_ADD(DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH), MONTH), INTERVAL ${previous_month_to_date_days} - 1 DAY)
@@ -370,7 +370,7 @@ view: order_items {
   }
 
   measure: mtd_total_sale_price {
-    label: "Current MTD Total Sale Price"
+    label: "Current MTD Sales"
     group_label: "MTD"
     type: sum
     value_format_name: usd
@@ -380,7 +380,7 @@ view: order_items {
   }
 
   measure: prev_mtd_total_sale_price {
-    label: "Previous MTD Total Sale Price"
+    label: "Previous MTD Sales"
     group_label: "MTD"
     type: sum
     value_format_name: usd
@@ -390,8 +390,41 @@ view: order_items {
   }
 
   measure: mtd_total_sale_price_differential {
-    description: "Total Sale Price Delta (This - Last)"
-    label: "Total Sale Price Delta"
+    label: "Total Revenue Delta $ (This - Last)"
+    group_label: "MTD"
+    type: number
+    value_format_name: usd
+    sql: ${mtd_total_sale_price} - ${prev_mtd_total_sale_price} ;;
+    drill_fields: [detail*]
+    html:
+      {% if value >= 500 %}
+        <div style="width: 100%; background: darkgreen; color:white">{{ rendered_value }}</div>
+      {% elsif value >= 100 and value < 500 %}
+        <div style="width: 100%; background: lime; color:black">{{ rendered_value }}</div>
+      {% elsif value > 0 and value < 100 %}
+        <div style="width: 100%; background: palegreen; color:black">{{ rendered_value }}</div>
+      {% elsif value > -100 and value < 0 %}
+        <div style="width: 100%; background: lightyellow; color:black">{{ rendered_value }}</div>
+      {% elsif value <= -100 and value > -500 %}
+        <div style="width: 100%; background: orange; color:black">{{ rendered_value }}</div>
+      {% else %}
+        <div style="width: 100%; background: red; color:white">{{ rendered_value }}</div>
+      {% endif %}
+    ;;
+  }
+
+
+  measure: mtd_filter_measure {
+    description: "Current MTD Total Sale Price + Previous MTD Total Sale Price"
+    group_label: "MTD"
+    type: number
+    value_format_name: usd
+    sql: ${mtd_total_sale_price} + ${prev_mtd_total_sale_price} ;;
+  }
+
+  measure: mtd_total_sale_price_differential_percent {
+    description: "Total Revenue Delta % (This - Last)"
+    label: "Revenue Delta %"
     group_label: "MTD"
     type: number
     sql: 1.0 * (${mtd_total_sale_price} - ${prev_mtd_total_sale_price}) / NULLIF(${prev_mtd_total_sale_price}, 0) ;;
@@ -409,14 +442,118 @@ view: order_items {
         <div style="width: 100%; background: red; color:white">{{ rendered_value }}</div>
       {% endif %}
     ;;
-
-    #FFA500 orange
-    #FF0000 red
-    #98FB98 lightgreen
-    # darkgreen
-
   }
 
+  ## Dynamic Measure
+  parameter: dynamic_measure_selector {
+    description: "Use with Dynamic Measure"
+    type: unquoted
+    default_value: "total_revenue"
+    allowed_value: {
+      label: "Total Units Sold"
+      value: "total_units_sold"
+    }
+    allowed_value: {
+      label: "Total Revenue"
+      value: "total_revenue"
+    }
+    # allowed_value: {
+    #   label: "Total Revenue This Month"
+    #   value: "total_revenue_this_month"
+    # }
+    allowed_value: {
+      label: "Total Gross Margin Percentage"
+      value: "total_gross_margin_percentage"
+    }
+  }
+
+  measure: dynamic_measure {
+    description: "Use with Dynamic Measure Selector"
+    label_from_parameter: dynamic_measure_selector
+    type: number
+    sql:
+      {% if dynamic_measure_selector._parameter_value == "total_units_sold" %}
+        ${count}
+      {% elsif dynamic_measure_selector._parameter_value == "total_revenue" %}
+        ${total_sale_price}
+      {% elsif dynamic_measure_selector._parameter_value == "total_revenue_this_month" %}
+        ${mtd_total_sale_price}
+      {% elsif dynamic_measure_selector._parameter_value == "total_gross_margin_percentage" %}
+        ${total_gross_margin_percentage}
+      {% else %}
+        ${count}
+      {% endif %}
+    ;;
+    html:
+      {% if dynamic_measure_selector._parameter_value == "total_units_sold" %}
+        {{ count._value }}
+      {% elsif dynamic_measure_selector._parameter_value == "total_revenue" %}
+        ${{ total_sale_price._value | round: 2 }}
+      {% elsif dynamic_measure_selector._parameter_value == "total_revenue_this_month" %}
+        ${{ mtd_total_sale_price._value | round: 2 }}
+      {% elsif dynamic_measure_selector._parameter_value == "total_gross_margin_percentage" %}
+        {{ total_gross_margin_percentage._value | round: 2 }}%
+      {% else %}
+        {{ count }}
+      {% endif %}
+    ;;
+  }
+  ##
+
+  ## Dynamic Measure
+  parameter: dynamic_pivot_selector {
+    description: "Use with Dynamic Measure"
+    type: unquoted
+    default_value: "total_revenue"
+    allowed_value: {
+      label: "Total Units Sold"
+      value: "total_units_sold"
+    }
+    allowed_value: {
+      label: "Total Revenue"
+      value: "total_revenue"
+    }
+    # allowed_value: {
+    #   label: "Total Revenue This Month"
+    #   value: "total_revenue_this_month"
+    # }
+    allowed_value: {
+      label: "Total Gross Margin Percentage"
+      value: "total_gross_margin_percentage"
+    }
+  }
+
+  # measure: dynamic_dimension {
+  #   description: "Use with Dynamic Measure Selector"
+  #   label_from_parameter: dynamic_measure_selector
+  #   type: number
+  #   sql:
+  #     {% if dynamic_measure_selector._parameter_value == "total_units_sold" %}
+  #       ${count}
+  #     {% elsif dynamic_measure_selector._parameter_value == "total_revenue" %}
+  #       ${total_sale_price}
+  #     {% elsif dynamic_measure_selector._parameter_value == "total_revenue_this_month" %}
+  #       ${mtd_total_sale_price}
+  #     {% elsif dynamic_measure_selector._parameter_value == "total_gross_margin_percentage" %}
+  #       ${total_gross_margin_percentage}
+  #     {% else %}
+  #       ${count}
+  #     {% endif %}
+  #   ;;
+  #   html:
+  #     {% if dynamic_measure_selector._parameter_value == "total_units_sold" %}
+  #       {{ count._value }}
+  #     {% elsif dynamic_measure_selector._parameter_value == "total_revenue" %}
+  #       ${{ total_sale_price._value | round: 2 }}
+  #     {% elsif dynamic_measure_selector._parameter_value == "total_revenue_this_month" %}
+  #       ${{ mtd_total_sale_price._value | round: 2 }}
+  #     {% elsif dynamic_measure_selector._parameter_value == "total_gross_margin_percentage" %}
+  #       {{ total_gross_margin_percentage._value | round: 2 }}%
+  #     {% else %}
+  #       {{ count }}
+  #     {% endif %}
+  #   ;;
+  # }
 
 
   measure: total_gross_margin {

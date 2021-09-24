@@ -62,7 +62,7 @@ view: retailers {
     sql: ${TABLE}.name ;;
     link: {
       label: "Retailer Dashboard"
-      url: "/dashboards/ayalascustomerlookupdb?Email={{ value | encode_uri }}"
+      url: "/dashboards-next/8?Name={{ value | encode_uri }}"
       icon_url: "https://freesvg.org/img/bar-15.png"
       # icon_url: "http://www.looker.com/favicon.ico"
     }
@@ -84,6 +84,13 @@ view: retailers {
     type: string
     sql: ${TABLE}.last_name ;;
   }
+
+  dimension: contact_name {
+    group_label: "Contact Info"
+    type: string
+    sql: ${first_name} || ' ' || ${last_name} ;;
+  }
+
 
   dimension: email {
     group_label: "Contact Info"
@@ -116,6 +123,33 @@ view: retailers {
         Your friends at the Look"
       }
     }
+    action: {
+      label: "Send Purchase Inquiry"
+      url: "https://desolate-refuge-53336.herokuapp.com/posts"
+      # icon_url: "https://sendgrid.com/favicon.ico"
+      icon_url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Aiga_mail.svg/480px-Aiga_mail.svg.png"
+      param: {
+        name: "some_auth_code"
+        value: "abc123456"
+      }
+      form_param: {
+        name: "Subject"
+        required: yes
+        default: "Hey {{ first_name._value }}, checking in..."
+      }
+      form_param: {
+        name: "Body"
+        type: textarea
+        required: yes
+        default:
+        "Dear {{ first_name._value }},
+
+        I noticed that you're ordering less this month.
+        How can we win more of your business?
+
+        -{{ _user_attributes['first_name'] }}"
+      }
+    }
     required_fields: [first_name]
   }
 
@@ -138,12 +172,30 @@ view: retailers {
     sql: ${TABLE}.zip ;;
   }
 
+  dimension: city_state_zip {
+    label: "City / State / Zip"
+    group_label: "Location"
+    sql: ${city} || ' ' || ${state} || ', ' || ${zip} ;;
+  }
+
   dimension: country {
     group_label: "Location"
     map_layer_name: countries
     drill_fields: [state, city]
     sql: ${TABLE}.country ;;
     html: <img @{SMALL_FLAG_STYLE} src="@{CF_MAP_URL_BASE}@{ISO3_TO_ISO2}@{CF_MAP_URL_SUFFIX}"/><span> {{ value }}</span> ;;
+  }
+
+  dimension: latitude {
+    hidden: yes
+    type: number
+    sql: ${TABLE}.latitude ;;
+  }
+
+  dimension: longitude {
+    hidden: yes
+    type: number
+    sql: ${TABLE}.longitude ;;
   }
 
   dimension: location {
@@ -153,6 +205,20 @@ view: retailers {
     sql_latitude: ${TABLE}.latitude ;;
     sql_longitude: ${TABLE}.longitude ;;
   }
+
+  dimension: map_location {
+    sql: 1 ;;
+    html: <img src="https://maps.googleapis.com/maps/api/staticmap?center={{ city._value }},{{ state._value }},{{ zip._value }}&zoom=6&size=400x250&maptype=roadmap&markers=color:blue%7Clabel:*%7C{{ latitude._value }},{{ longitude._value }}&key=AIzaSyDTq2FzYgyTH6skQl1JidyzqVcDizH2mJU" /> ;;
+  }
+  # https://maps.googleapis.com/maps/api/staticmap?center=Norfolk,Virginia,23529&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:*%7C36.96373295775046,-76.23564786665561&key=AIzaSyDTq2FzYgyTH6skQl1JidyzqVcDizH2mJU
+  # AIzaSyDTq2FzYgyTH6skQl1JidyzqVcDizH2mJU
+
+
+  # https://maps.googleapis.com/maps/api/staticmap?center={{ city._value }},{{ state._value }},{{ zip._value }}&zoom=13&size=600x300&maptype=roadmap
+  # &markers=color:blue%7Clabel:S%7C{{ latitude._value }},{{ longitude._value }}&key=AIzaSyDTq2FzYgyTH6skQl1JidyzqVcDizH2mJU
+
+
+
 
   dimension: approx_latitude {
     group_label: "Lat / Lng Location"

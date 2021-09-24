@@ -2,10 +2,6 @@ connection: "jasoncascio-bigquery"
 include: "/views/*"
 include: "/mock_views/*"
 
-explore: retailers {}
-explore: products {}
-explore: retailers_p2 {}
-explore: retailer_order_facts {}
 
 datagroup: ecommerce_etl {
   sql_trigger: SELECT max(created_at) FROM ecomm.events ;;
@@ -21,7 +17,7 @@ explore: order_items {
     #Left Join only brings in items that have been sold as order_item
     type: full_outer
     relationship: one_to_one
-    sql_on: ${inventory_items.id} = ${order_items.inventory_item_id} ;;
+    sql_on: ${order_items.inventory_item_id} = ${inventory_items.id} ;;
   }
 
   join: products {
@@ -60,5 +56,7 @@ explore: order_items {
     type: full_outer
     sql_on: ${order_items.order_id} = ${repeat_purchase_facts.order_id} ;;
   }
+
+  join: reference {}
 
 }

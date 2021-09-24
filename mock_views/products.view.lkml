@@ -69,7 +69,7 @@ view: products {
   dimension: image {
     type: string
     sql: ${image_url} ;;
-    html: <img style="height: 100px;" src="{{ value }}" /> ;;
+    html: <img style="height: 150px;" src="{{ value }}" /> ;;
   }
 
   dimension: name {
@@ -148,35 +148,3 @@ view: products {
     fields: [name, category, sub_category, proof, retail_price]
   }
 }
-
-
-# view: product_id_to_initials {
-#   derived_table: {
-#     sql:
-#       SELECT DISTINCT
-#           id
-#         , cleansed_initial AS initial
-#       FROM ${products_cleansed.SQL_TABLE_NAME}
-#     ;;
-#     persist_for: "1000 hours"
-#   }
-
-#   dimension: _pk {
-#     hidden: yes
-#     primary_key: yes
-#     type: string
-#     sql: ${id} || ${initial};;
-#   }
-
-#   dimension: id {
-#     hidden: yes
-#     type: number
-#     sql: ${TABLE}.id ;;
-#   }
-
-#   dimension: initial {
-#     hidden: yes
-#     type: string
-#     sql: ${TABLE}.initial ;;
-#   }
-# }

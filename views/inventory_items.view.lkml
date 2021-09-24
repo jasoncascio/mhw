@@ -1,5 +1,16 @@
 view: inventory_items {
-  sql_table_name: looker-private-demo.ecomm.inventory_items ;;
+  derived_table: {
+    sql:
+      SELECT
+          i.*
+      FROM  looker-private-demo.ecomm.inventory_items i
+      LEFT JOIN looker-private-demo.ecomm.order_items o ON (i.id = o.inventory_item_id)
+      LEFT JOIN looker-private-demo.ecomm.users u ON (o.user_id = u.id)
+      WHERE u.country = 'USA'
+    ;;
+    persist_for: "1000 hours"
+  }
+  # sql_table_name: looker-private-demo.ecomm.inventory_items ;;
 
   dimension: id {
     label: "Inventory Item ID"
@@ -35,6 +46,11 @@ view: inventory_items {
   dimension: is_sold {
     type: yesno
     sql: ${sold_raw} IS NOT NULL ;;
+  }
+
+  dimension: is_sold_pending_shipping {
+    type: yesno
+    sql: ${order_items.status} = 'Processing' ;;
   }
 
   dimension: days_in_inventory {
@@ -117,13 +133,13 @@ view: inventory_items {
     }
   }
 
-  measure: stock_coverage_ratio {
-    type:  number
-    description: "Stock on Hand vs Trailing 28d Sales Ratio"
-    sql:  1.0 * ${number_on_hand} / nullif(${order_items.count_last_28d} * 20.0, 0) ;;
-    value_format_name: decimal_2
-    html: <p style="color: black; background-color: rgba({{ value | times: -100.0 | round | plus: 250 }},{{value | times: 100.0 | round | plus: 100}},100,80); font-size:100%; text-align:center">{{ rendered_value }}</p> ;;
-  }
+  # measure: stock_coverage_ratio {
+  #   type:  number
+  #   description: "Stock on Hand vs Trailing 28d Sales Ratio"
+  #   sql:  1.0 * ${number_on_hand} / nullif(${order_items.count_last_28d} * 20.0, 0) ;;
+  #   value_format_name: decimal_2
+  #   html: <p style="color: black; background-color: rgba({{ value | times: -100.0 | round | plus: 250 }},{{value | times: 100.0 | round | plus: 100}},100,80); font-size:100%; text-align:center">{{ rendered_value }}</p> ;;
+  # }
 
   set: detail {
     fields: [id, products.category, products.sub_category, products.name, cost, created_time, sold_time]
