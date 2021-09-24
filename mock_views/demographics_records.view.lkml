@@ -28,7 +28,7 @@ view: demographics_records {
   }
 
   dimension: age_bucket {
-    type: number
+    type: string
     sql:
       CASE
         WHEN ${age} >= 21 AND ${age} <= 30 THEN '21-30'
