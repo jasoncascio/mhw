@@ -149,6 +149,7 @@ view: demographics_records {
         WHEN ${income} >= 250000 THEN '250000-1000000'
       END
     ;;
+    order_by_field: affinity_by_income.income_low
   }
 
   dimension: marital_status {
