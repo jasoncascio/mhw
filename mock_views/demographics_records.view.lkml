@@ -33,7 +33,6 @@ view: demographics_records {
               WHEN adjusted_age >= 41 AND adjusted_age <= 50 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 6 * RAND() * RAND() ) * 100000)
               WHEN adjusted_age >= 51 AND adjusted_age <= 60 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 7 * RAND() * RAND() ) * 110000)
               WHEN adjusted_age >= 61 AND adjusted_age <= 70 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 7 * RAND() * RAND() ) * 90000)
-              WHEN adjusted_age >= 61 AND adjusted_age <= 70 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 7 * RAND() * RAND() ) * 80000)
               WHEN adjusted_age >= 71 AND adjusted_age <= 80 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 6 * RAND() * RAND() ) * 70000)
               WHEN adjusted_age >= 81 AND adjusted_age <= 90 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 5 * RAND() * RAND() ) * 60000)
               WHEN adjusted_age >= 91 AND adjusted_age <= 100 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 5 * RAND() * RAND() ) * 60000)
