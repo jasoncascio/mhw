@@ -62,7 +62,7 @@ view: retailers {
     sql: ${TABLE}.name ;;
     link: {
       label: "Retailer Dashboard"
-      url: "/dashboards-next/8?Name={{ value | encode_uri }}"
+      url: "/dashboards-next/8?Name={{ value | encode_uri }}&Product+Name={{ products.name._value | encode_uri }}"
       icon_url: "https://freesvg.org/img/bar-15.png"
       # icon_url: "http://www.looker.com/favicon.ico"
     }
