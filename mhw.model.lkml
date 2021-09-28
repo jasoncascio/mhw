@@ -17,6 +17,24 @@ explore: demographics_records {
     sql_on: ${demographics_records.age_bucket} = ${affinity_by_age.age_bucket} ;;
   }
 
+  join: affinity_by_state {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${demographics_records.state} = ${affinity_by_state.state} ;;
+  }
+
+  join: affinity_by_income {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${demographics_records.income_tier} = ${affinity_by_income.income_tier} ;;
+  }
+
+  join: affinity_by_marital_status {
+    type: left_outer
+    relationship: many_to_one
+    sql_on: ${demographics_records.marital_status} = ${affinity_by_marital_status.marital_status} ;;
+  }
+
 }
 
 explore: order_items {

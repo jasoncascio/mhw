@@ -1,12 +1,23 @@
-view: affinity_by_age {
-  sql_table_name: `jasoncascio.mhw.affinity_by_age`
-    ;;
+view: affinity_by_income {
+  sql_table_name: `jasoncascio.mhw.affinity_by_income` ;;
 
-  dimension: age_bucket {
-    primary_key: yes
+  dimension: income_tier {
     hidden: yes
+    primary_key: yes
     type: string
-    sql: ${lower_age} || '-' || ${upper_age} ;;
+    sql: ${income_low} || '-' || ${income_high} ;;
+  }
+
+  dimension: income_high {
+    hidden: yes
+    type: number
+    sql: ${TABLE}.income_high ;;
+  }
+
+  dimension: income_low {
+    hidden: yes
+    type: number
+    sql: ${TABLE}.income_low ;;
   }
 
   dimension: c_beer_aff {
@@ -33,22 +44,10 @@ view: affinity_by_age {
     sql: ${TABLE}.c_liquor_aff ;;
   }
 
-  dimension: c_total_aff {
-    hidden: yes
-    type: number
-    sql: ${TABLE}.c_total_aff ;;
-  }
-
   dimension: c_wine_aff {
     hidden: yes
     type: number
     sql: ${TABLE}.c_wine_aff ;;
-  }
-
-  dimension: lower_age {
-    hidden: yes
-    type: number
-    sql: ${TABLE}.lower_age ;;
   }
 
   dimension: s_absinthe_aff {
@@ -111,12 +110,6 @@ view: affinity_by_age {
     sql: ${TABLE}.s_tequila_aff ;;
   }
 
-  dimension: s_total_aff {
-    hidden: yes
-    type: number
-    sql: ${TABLE}.s_total_aff ;;
-  }
-
   dimension: s_triplesec_aff {
     hidden: yes
     type: number
@@ -141,15 +134,8 @@ view: affinity_by_age {
     sql: ${TABLE}.s_zinfandel_aff ;;
   }
 
-  dimension: upper_age {
-    hidden: yes
-    type: number
-    sql: ${TABLE}.upper_age ;;
-  }
-
   measure: count {
     hidden: yes
     type: count
   }
-
 }
