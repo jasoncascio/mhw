@@ -21,7 +21,7 @@ view: brand_joined_products {
       SELECT
           *
       FROM ${products_cleansed.SQL_TABLE_NAME} bc
-      LEFT JOIN `jasoncascio.mhw.brands` b ON (bc.cleansed_initial = b.initial)
+      INNER JOIN `jasoncascio.mhw.brands` b ON (bc.cleansed_initial = b.initial)
     ;;
     persist_for: "1000 hours"
   }

@@ -67,6 +67,7 @@ explore: order_items {
 ##### (2) Demographics Insights
 explore: demographics_records {
   label: "(2) Demographics Insights"
+
   join: affinity_by_age {
     type: left_outer
     relationship: many_to_one

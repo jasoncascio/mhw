@@ -224,6 +224,18 @@ view: retailers {
     sql_longitude: ${TABLE}.longitude ;;
   }
 
+  dimension: sub_region {
+    type: string
+    sql: ${TABLE}.sub_region ;;
+    drill_fields: [state]
+  }
+
+  dimension: region {
+    type: string
+    sql: ${TABLE}.region ;;
+    drill_fields: [sub_region,state]
+  }
+
   dimension: map_location {
     sql: 1 ;;
     html: <img src="https://maps.googleapis.com/maps/api/staticmap?center={{ city._value }},{{ state._value }},{{ zip._value }}&zoom=6&size=400x250&maptype=roadmap&markers=color:blue%7Clabel:*%7C{{ latitude._value }},{{ longitude._value }}&key=AIzaSyDTq2FzYgyTH6skQl1JidyzqVcDizH2mJU" /> ;;

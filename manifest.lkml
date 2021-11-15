@@ -63,3 +63,34 @@ constant: SQL_REGION {
               WHEN sub_region IN ('Mountain','Pacific') THEN 'West'
             END"
 }
+
+
+
+# ****Categories
+# Beer
+# Champagne
+# Liquor
+# Liqueur
+# Wine
+
+
+# ***Sub Categories
+# Ale
+# Brut
+# Brandy
+# Triple Sec
+# Herbal
+# Absinthe
+# Liqueur
+# Tequila
+# Rum
+# Irish Whiskey
+# Gin
+# Scotch Whiskey
+# Vodka
+# Cognac
+# Whiskey
+# Malbec
+# Merlot
+# Chardonnay
+# Zinfandel
