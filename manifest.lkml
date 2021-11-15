@@ -40,3 +40,26 @@ constant: ISO3_TO_ISO2 {
   # {% else value == \"ALA\" %}ax
   # {% else %}UNKNOWN{% endif %}
 }
+
+constant: SQL_SUB_REGION {
+  value: "CASE
+              WHEN state IN ('Connecticut','Maine','Massachusetts','Vermont','New Hampshire','Rhode Island') THEN 'New England'
+              WHEN state IN ('New Jersey','New York','Pennsylvania') THEN 'Mid-Atlantic'
+              WHEN state IN ('Indiana','Illinois','Michigan','Ohio','Wisconsin') THEN 'East North Central'
+              WHEN state IN ('Iowa','Kansas','Minnesota','Missouri','Nebraska','North Dakota','South Dakota') THEN 'West North Central'
+              WHEN state IN ('Delaware','Florida','Georgia','Maryland','North Carolina','South Carolina','Virginia','District of Columbia','West Virginia') THEN 'South Atlantic'
+              WHEN state IN ('Alabama','Kentucky','Mississippi','Tennessee') THEN 'East South Central'
+              WHEN state IN ('Arkansas','Louisiana','Oklahoma','Texas') THEN 'West South Central'
+              WHEN state IN ('Arizona','Colorado','Idaho','Montana','Nevada','New Mexico','Utah','Wyoming') THEN 'Mountain'
+              WHEN state IN ('Alaska','California','Hawaii','Montana','Oregon','Washington') THEN 'Pacific'
+            END"
+}
+
+constant: SQL_REGION {
+  value: "CASE
+              WHEN sub_region IN ('New England','Mid-Atlantic') THEN 'Northeast'
+              WHEN sub_region IN ('East North Central','West North Central') THEN 'Midwest'
+              WHEN sub_region IN ('South Atlantic','East South Central','West South Central') THEN 'South'
+              WHEN sub_region IN ('Mountain','Pacific') THEN 'West'
+            END"
+}

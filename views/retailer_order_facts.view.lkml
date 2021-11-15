@@ -2,14 +2,18 @@ view: retailer_order_facts {
   derived_table: {
     sql:
       SELECT
-          retailer_id
-        , COUNT(DISTINCT order_id) AS lifetime_orders
-        , SUM(sale_price) AS lifetime_revenue
-        , CAST(MIN(created_at)  AS TIMESTAMP) AS first_order
-        , CAST(MAX(created_at)  AS TIMESTAMP)  AS latest_order
-        , COUNT(DISTINCT FORMAT_TIMESTAMP('%Y%m', created_at))  AS number_of_distinct_months_with_orders
-      FROM ${order_items.SQL_TABLE_NAME}
-      GROUP BY retailer_id
+          o.retailer_id
+--        , i.product_id
+        , COUNT(DISTINCT o.order_id) AS lifetime_orders
+        , SUM(o.sale_price) AS lifetime_revenue
+        , CAST(MIN(o.created_at)  AS TIMESTAMP) AS first_order
+        , CAST(MAX(o.created_at)  AS TIMESTAMP)  AS latest_order
+        , COUNT(DISTINCT FORMAT_TIMESTAMP('%Y%m', o.created_at))  AS number_of_distinct_months_with_orders
+      FROM ${order_items.SQL_TABLE_NAME} o
+--      LEFT JOIN ${inventory_items.SQL_TABLE_NAME} i ON (o.inventory_item_id = i.id)
+      GROUP BY
+          1
+--        , 2
     ;;
     datagroup_trigger: ecommerce_etl
   }

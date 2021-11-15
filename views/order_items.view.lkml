@@ -3,13 +3,11 @@ view: order_items {
     sql:
       SELECT
           o.*
-        , SUBSTR(u.first_name, 1, 1) || SUBSTR(u.last_name, 1, 1) AS retailer_id
+        , UPPER(SUBSTR(u.first_name, 1, 1) || SUBSTR(u.last_name, 1, 1)) AS retailer_id
       FROM looker-private-demo.ecomm.order_items o
-      LEFT JOIN looker-private-demo.ecomm.users u ON (o.user_id = u.id)
+      INNER JOIN looker-private-demo.ecomm.users u ON (o.user_id = u.id)
       WHERE 1=1
       AND u.country = 'USA'
-      AND o.id IS NOT NULL
-      AND o.order_id IS NOT NULL
     ;;
     # needed to join only to the retailers considered (US)
     persist_for: "1000 hours"

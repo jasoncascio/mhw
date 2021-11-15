@@ -148,3 +148,24 @@ view: products {
     fields: [name, category, sub_category, proof, retail_price]
   }
 }
+
+view: products_reference {
+  derived_table: {
+    sql:
+      SELECT DISTINCT
+          category
+        , sub_category
+      FROM ${products.SQL_TABLE_NAME}
+    ;;
+  }
+
+  dimension: category {
+    type: string
+    sql: ${TABLE}.category ;;
+  }
+
+  dimension: sub_category {
+    type: string
+    sql: ${TABLE}.sub_category ;;
+  }
+}

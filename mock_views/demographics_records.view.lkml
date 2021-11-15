@@ -10,19 +10,15 @@ view: demographics_records {
               WHEN age > 100 THEN 21 + CAST(ROUND(age / 3  + 10 * RAND()) AS INT)
               ELSE age
             END AS adjusted_age
-          , CASE
-              WHEN state IN ('Connecticut','Maine','Massachusetts','Vermont','New Hampshire','Rhode Island') THEN 'New England'
-              WHEN state IN ('New Jersey','New York','Pennsylvania') THEN 'Mid-Atlantic'
-              WHEN state IN ('Indiana','Illinois','Michigan','Ohio','Wisconsin') THEN 'East North Central'
-              WHEN state IN ('Iowa','Kansas','Minnesota','Missouri','Nebraska','North Dakota','South Dakota') THEN 'West North Central'
-              WHEN state IN ('Delaware','Florida','Georgia','Maryland','North Carolina','South Carolina','Virginia','District of Columbia','West Virginia') THEN 'South Atlantic'
-              WHEN state IN ('Alabama','Kentucky','Mississippi','Tennessee') THEN 'East South Central'
-              WHEN state IN ('Arkansas','Louisiana','Oklahoma','Texas') THEN 'West South Central'
-              WHEN state IN ('Arizona','Colorado','Idaho','Montana','Nevada','New Mexico','Utah','Wyoming') THEN 'Mountain'
-              WHEN state IN ('Alaska','California','Hawaii','Montana','Oregon','Washington') THEN 'Pacific'
-            END AS sub_region
+          , @{SQL_SUB_REGION} AS sub_region
         FROM `looker-private-demo.ecomm.users`
         WHERE country = 'USA'
+      ),
+      region_added AS (
+        SELECT
+            *
+          , @{SQL_REGION} AS region
+        FROM base
       ),
       income_added AS (
         SELECT
@@ -37,7 +33,7 @@ view: demographics_records {
               WHEN adjusted_age >= 81 AND adjusted_age <= 90 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 5 * RAND() * RAND() ) * 60000)
               WHEN adjusted_age >= 91 AND adjusted_age <= 100 THEN ROUND(((1 - 0.4 * RAND()) - 0.4 * RAND() ) * (1 + 5 * RAND() * RAND() ) * 60000)
             END AS income
-        FROM base
+        FROM region_added
       ),
       marriage_added AS (
         SELECT
@@ -68,8 +64,7 @@ view: demographics_records {
 
   dimension: age {
     type: number
-    sql: ${TABLE}.adjusted_age
-      ;;
+    sql: ${TABLE}.adjusted_age ;;
   }
 
   dimension: sub_region {
@@ -80,14 +75,7 @@ view: demographics_records {
 
   dimension: region {
     type: string
-    sql:
-      CASE
-        WHEN ${sub_region} IN ('New England','Mid-Atlantic') THEN 'Northeast'
-        WHEN ${sub_region} IN ('East North Central','West North Central') THEN 'Midwest'
-        WHEN ${sub_region} IN ('South Atlantic','East South Central','West South Central') THEN 'South'
-        WHEN ${sub_region} IN ('Mountain','Pacific') THEN 'West'
-      END
-    ;;
+    sql: ${TABLE}.region ;;
     drill_fields: [sub_region,state]
   }
 
@@ -117,7 +105,7 @@ view: demographics_records {
     map_layer_name: countries
     sql: ${TABLE}.country ;;
     drill_fields: [region,sub_region,state,zip,city]
-    html: <img @{SMALL_FLAG_STYLE} src="@{CF_MAP_URL_BASE}@{ISO3_TO_ISO2}@{CF_MAP_URL_SUFFIX}"/><span> {{ value }}</span> ;;
+    # html: <img @{SMALL_FLAG_STYLE} src="@{CF_MAP_URL_BASE}@{ISO3_TO_ISO2}@{CF_MAP_URL_SUFFIX}"/><span> {{ value }}</span> ;;
   }
 
   dimension: gender {

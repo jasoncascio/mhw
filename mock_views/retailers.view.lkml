@@ -4,7 +4,7 @@ view: retailers_p1 {
     sql:
       SELECT
           *
-        , SUBSTR(u.first_name, 1, 1) || SUBSTR(u.last_name, 1, 1) AS retailer_id
+        , UPPER(SUBSTR(u.first_name, 1, 1) || SUBSTR(u.last_name, 1, 1)) AS retailer_id
       FROM `looker-private-demo.ecomm.users` u
       WHERE country = 'USA'
       ORDER BY id ASC
@@ -27,32 +27,49 @@ view: retailers_p2 {
   }
 }
 
+
 # smash down retailers by initials
 view: retailers {
   derived_table: {
     sql:
-      SELECT DISTINCT
-          name
-        , retailer_id AS id
-        , FIRST_VALUE(type) OVER (PARTITION BY name ORDER BY name ASC) AS type
-        , FIRST_VALUE(first_name) OVER (PARTITION BY name ORDER BY name ASC) AS first_name
-        , FIRST_VALUE(last_name) OVER (PARTITION BY name ORDER BY name ASC) AS last_name
-        , FIRST_VALUE(city) OVER (PARTITION BY name ORDER BY name ASC) AS city
-        , FIRST_VALUE(state) OVER (PARTITION BY name ORDER BY name ASC) AS state
-        , FIRST_VALUE(zip) OVER (PARTITION BY name ORDER BY name ASC) AS zip
-        , FIRST_VALUE(country) OVER (PARTITION BY name ORDER BY name ASC) AS country
-        , FIRST_VALUE(email) OVER (PARTITION BY name ORDER BY name ASC) AS email
-        , FIRST_VALUE(longitude) OVER (PARTITION BY name ORDER BY name ASC) AS longitude
-        , FIRST_VALUE(latitude) OVER (PARTITION BY name ORDER BY name ASC) AS latitude
-        , FIRST_VALUE(created_at) OVER (PARTITION BY name ORDER BY created_at ASC) AS created_at
-        , FIRST_VALUE(traffic_source) OVER (PARTITION BY name ORDER BY created_at ASC) AS traffic_source
-      FROM ${retailers_p2.SQL_TABLE_NAME}
+      WITH
+        base AS (
+          SELECT DISTINCT
+              name
+            , retailer_id AS id
+            , FIRST_VALUE(type) OVER (PARTITION BY name ORDER BY name ASC) AS type
+            , FIRST_VALUE(first_name) OVER (PARTITION BY name ORDER BY name ASC) AS first_name
+            , FIRST_VALUE(last_name) OVER (PARTITION BY name ORDER BY name ASC) AS last_name
+            , FIRST_VALUE(city) OVER (PARTITION BY name ORDER BY name ASC) AS city
+            , FIRST_VALUE(state) OVER (PARTITION BY name ORDER BY name ASC) AS state
+            , FIRST_VALUE(zip) OVER (PARTITION BY name ORDER BY name ASC) AS zip
+            , FIRST_VALUE(country) OVER (PARTITION BY name ORDER BY name ASC) AS country
+            , FIRST_VALUE(email) OVER (PARTITION BY name ORDER BY name ASC) AS email
+            , FIRST_VALUE(longitude) OVER (PARTITION BY name ORDER BY name ASC) AS longitude
+            , FIRST_VALUE(latitude) OVER (PARTITION BY name ORDER BY name ASC) AS latitude
+            , FIRST_VALUE(created_at) OVER (PARTITION BY name ORDER BY created_at ASC) AS created_at
+            , FIRST_VALUE(traffic_source) OVER (PARTITION BY name ORDER BY created_at ASC) AS traffic_source
+          FROM ${retailers_p2.SQL_TABLE_NAME}
+        ),
+        sub_region_added AS (
+          SELECT
+              *
+            , @{SQL_SUB_REGION} AS sub_region
+          FROM base
+        ),
+        region_added AS (
+          SELECT
+              *
+            , @{SQL_REGION} AS region
+          FROM sub_region_added
+        )
+      SELECT * FROM region_added
     ;;
     persist_for: "1000 hours"
   }
 
   dimension: id {
-    hidden: yes
+    hidden: no
     primary_key: yes
     sql: ${TABLE}.id ;;
   }
@@ -62,7 +79,8 @@ view: retailers {
     sql: ${TABLE}.name ;;
     link: {
       label: "Retailer Dashboard"
-      url: "/dashboards-next/8?Name={{ value | encode_uri }}&Product+Name={{ products.name._value | encode_uri }}"
+      # url: "/dashboards-next/8?Name={{ value | encode_uri }}&Product+Name={{ products.name._value | encode_uri }}"
+      url: "/dashboards-next/8?Name={{ value | encode_uri }}"
       icon_url: "https://freesvg.org/img/bar-15.png"
       # icon_url: "http://www.looker.com/favicon.ico"
     }
